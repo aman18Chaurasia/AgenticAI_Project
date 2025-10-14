@@ -54,3 +54,4 @@ if __name__ == "__main__":
         _init_db()
         print("DB initialized and seeded.")
 
+## Just to test

@@ -23,3 +23,4 @@ class CapsuleOut(BaseModel):
     date: str
     items: List[dict]
 
+## Just to test
