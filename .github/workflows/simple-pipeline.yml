@@ -1,0 +1,98 @@
+name: Simple UPSC Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  send-emails:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install minimal dependencies
+      run: |
+        pip install requests feedparser smtplib-ssl
+    
+    - name: Run simple pipeline
+      run: |
+        python -c "
+        import feedparser
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from datetime import datetime
+        
+        # Fetch news
+        feeds = [
+            'https://www.thehindu.com/news/national/feeder/default.rss',
+            'https://pib.gov.in/rss/livelinks.xml'
+        ]
+        
+        news_items = []
+        for feed_url in feeds:
+            try:
+                parsed = feedparser.parse(feed_url)
+                for entry in parsed.entries[:5]:
+                    news_items.append({
+                        'title': entry.get('title', 'No title'),
+                        'link': entry.get('link', ''),
+                        'summary': entry.get('summary', 'No summary')[:200]
+                    })
+            except:
+                continue
+        
+        # Create email content
+        html_content = '''
+        <html>
+        <body>
+        <h2>Daily UPSC Capsule - ''' + datetime.now().strftime('%Y-%m-%d') + '''</h2>
+        <p>Dear UPSC Aspirant,</p>
+        <p>Here are today's important news items:</p>
+        '''
+        
+        for item in news_items[:10]:
+            html_content += f'''
+            <div style=\"margin: 20px 0; padding: 15px; border: 1px solid #ddd;\">
+                <h3><a href=\"{item['link']}\">{item['title']}</a></h3>
+                <p>{item['summary']}</p>
+            </div>
+            '''
+        
+        html_content += '''
+        <p>Best regards,<br>CivicBriefs.ai</p>
+        </body>
+        </html>
+        '''
+        
+        # Send email
+        subscribers = ['aman007chaurasia@gmail.com']
+        
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'Daily UPSC Capsule - ' + datetime.now().strftime('%Y-%m-%d')
+            msg['From'] = 'aman007chaurasia@gmail.com'
+            
+            for email in subscribers:
+                msg['To'] = email
+                html_part = MIMEText(html_content, 'html')
+                msg.attach(html_part)
+                
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.starttls()
+                    server.login('aman007chaurasia@gmail.com', 'enyi hwru hncp lhdi')
+                    server.send_message(msg)
+                
+                print(f'Email sent to {email}')
+        except Exception as e:
+            print(f'Email failed: {e}')
+        
+        print(f'Pipeline completed. Processed {len(news_items)} news items.')
+        "
