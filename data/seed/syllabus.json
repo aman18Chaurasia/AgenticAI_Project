@@ -1,0 +1,10 @@
+[
+  {"paper": "GS1", "topic": "Indian History - Ancient", "keywords": "Indus Valley, Vedic, Maurya"},
+  {"paper": "GS1", "topic": "Indian History - Medieval", "keywords": "Delhi Sultanate, Mughal"},
+  {"paper": "GS2", "topic": "Polity - Constitution", "keywords": "fundamental rights, DPSP, amendments"},
+  {"paper": "GS2", "topic": "Governance & Social Justice", "keywords": "schemes, welfare, inclusion"},
+  {"paper": "GS3", "topic": "Economy - Growth & Development", "keywords": "GDP, inflation, fiscal"},
+  {"paper": "GS3", "topic": "Environment & Ecology", "keywords": "climate, biodiversity, conservation"},
+  {"paper": "GS4", "topic": "Ethics & Integrity", "keywords": "values, probity, attitude"}
+]
+

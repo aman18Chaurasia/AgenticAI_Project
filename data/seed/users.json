@@ -1,0 +1,5 @@
+[
+  {"email": "admin@civicbriefs.ai", "full_name": "Admin User", "role": "admin", "password": "admin123"},
+  {"email": "aman007chaurasia@gmail.com", "full_name": "Aman Chaurasia", "role": "user", "password": "password123"}
+]
+

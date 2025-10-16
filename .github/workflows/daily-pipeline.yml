@@ -1,0 +1,47 @@
+name: Daily UPSC Pipeline
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC (11:30 AM IST)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Set up environment
+      run: |
+        echo "DATABASE_URL=sqlite:///data/db.sqlite3" >> .env
+        echo "SMTP_SERVER=smtp.gmail.com" >> .env
+        echo "SMTP_PORT=587" >> .env
+        echo "SMTP_USERNAME=aman007chaurasia@gmail.com" >> .env
+        echo "SMTP_PASSWORD=enyi hwru hncp lhdi" >> .env
+        echo "SECRET_KEY=your-secret-key-change-this-in-production" >> .env
+        echo "NEWS_FEEDS=https://www.thehindu.com/news/national/feeder/default.rss,https://www.thehindu.com/news/international/feeder/default.rss,https://pib.gov.in/rss/livelinks.xml" >> .env
+    
+    - name: Initialize database
+      run: python -m app.main --init-db
+    
+    - name: Run autonomous pipeline
+      run: python -m app.agents.orchestrator --run-once
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: pipeline-logs
+        path: logs/
