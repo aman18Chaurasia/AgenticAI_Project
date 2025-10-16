@@ -47,10 +47,3 @@ jobs:
         from app.agents.orchestrator import run_full_agentic_pipeline
         run_full_agentic_pipeline()
         "
-    
-    - name: Upload logs
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: pipeline-logs
-        path: logs/
