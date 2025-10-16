@@ -21,23 +21,32 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install fastapi uvicorn sqlmodel feedparser httpx apscheduler python-multipart python-jose[cryptography] passlib[bcrypt] || pip install fastapi uvicorn sqlmodel feedparser httpx apscheduler
+    
+    - name: Create directories
+      run: |
+        mkdir -p data
+        mkdir -p logs
     
     - name: Set up environment
       run: |
+        echo "APP_ENV=production" > .env
         echo "DATABASE_URL=sqlite:///data/db.sqlite3" >> .env
         echo "SMTP_SERVER=smtp.gmail.com" >> .env
         echo "SMTP_PORT=587" >> .env
         echo "SMTP_USERNAME=aman007chaurasia@gmail.com" >> .env
         echo "SMTP_PASSWORD=enyi hwru hncp lhdi" >> .env
-        echo "SECRET_KEY=your-secret-key-change-this-in-production" >> .env
-        echo "NEWS_FEEDS=https://www.thehindu.com/news/national/feeder/default.rss,https://www.thehindu.com/news/international/feeder/default.rss,https://pib.gov.in/rss/livelinks.xml" >> .env
+        echo "SECRET_KEY=github-actions-secret-key-2024" >> .env
+        echo "NEWS_FEEDS=https://www.thehindu.com/news/national/feeder/default.rss,https://www.thehindu.com/news/international/feeder/default.rss" >> .env
     
-    - name: Initialize database
-      run: python -m app.main --init-db
-    
-    - name: Run autonomous pipeline
-      run: python -m app.agents.orchestrator --run-once
+    - name: Run pipeline directly
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        from app.agents.orchestrator import run_full_agentic_pipeline
+        run_full_agentic_pipeline()
+        "
     
     - name: Upload logs
       if: always()
