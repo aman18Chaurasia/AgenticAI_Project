@@ -26,8 +26,15 @@ def build_daily_capsule(session: Session):
             if topic:
                 topics.append({"paper": topic.paper, "topic": topic.topic, "score": m.score})
         
-        # Get related PYQs
-        pyqs = find_related_pyqs(session, f"{n.title} {n.summary or n.content or ''}")
+        # Get related PYQs with better context
+        search_text = f"{n.title} {n.summary or n.content or ''}"
+        # Add topic keywords for better matching
+        try:
+            topic_keywords = " ".join([t.get("topic", "") for t in topics]) if topics else ""
+            enhanced_search = f"{search_text} {topic_keywords}"
+        except:
+            enhanced_search = search_text
+        pyqs = find_related_pyqs(session, enhanced_search)
         
         # Use content as summary if summary is empty
         summary = n.summary or n.content or "No summary available"
@@ -40,6 +47,8 @@ def build_daily_capsule(session: Session):
             "summary": summary,
             "topics": topics,
             "pyqs": pyqs,
+            "pyq_count": len(pyqs),
+            "relevance_score": max([p["score"] for p in pyqs]) if pyqs else 0.0
         })
     
     # Save new capsule

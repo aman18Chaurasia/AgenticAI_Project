@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Forgot Password</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Forgot Password</h1>
+      <div id="banner" class="banner"></div>
+      <input id="femail" placeholder="email" />
+      <div class="row">
+        <button id="btnForgot" class="primary">Send Reset Link</button>
+        <a href="/login"><button type="button">Back to Login</button></a>
+      </div>
+      <pre id="forgotOut" class="out"></pre>
+    </main>
+    <script>
+      const $=(id)=>document.getElementById(id);
+      function showBanner(msg, kind='success'){ const b=$('banner'); b.textContent=msg; b.className='banner '+kind; b.style.display='block'; }
+      document.getElementById('btnForgot').onclick = async ()=>{
+        const res = await fetch('/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:$('femail').value})});
+        const data = await res.json().catch(()=>({}));
+        $('forgotOut').textContent = JSON.stringify(data,null,2);
+        if(res.ok){ showBanner('If the account exists, a reset link was sent.', 'success'); }
+        else { showBanner('Request failed. Try again later.', 'error'); }
+      };
+    </script>
+  </body>
+  </html>

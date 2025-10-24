@@ -5,12 +5,13 @@ from ...models.user import User
 from ...services.ingest import fetch_and_parse_feeds, save_news_items
 from ...services.capsules import build_daily_capsule
 from ...services.notifier import send_bulk_capsule_emails
+from ...core.deps import require_admin
 import json
 
 router = APIRouter()
 
 @router.post("/run")
-def run_full_pipeline(session: Session = Depends(get_session)):
+def run_full_pipeline(session: Session = Depends(get_session), _: User = Depends(require_admin)):
     """Run the complete pipeline: ingest -> capsule -> email"""
     
     # Step 1: Ingest news

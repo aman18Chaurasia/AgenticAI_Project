@@ -1,138 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CivicBriefs.ai - UPSC Preparation Mentor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="/static/style.css" rel="stylesheet">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <h1 class="nav-title">
-                <i class="fas fa-graduation-cap"></i>
-                CivicBriefs.ai
-            </h1>
-            <div class="nav-right">
-                <div class="nav-links">
-                    <a href="#dashboard" class="nav-link active" data-tab="dashboard">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a href="#capsule" class="nav-link" data-tab="capsule">
-                        <i class="fas fa-newspaper"></i> Daily Capsule
-                    </a>
-                    <a href="#admin" class="nav-link admin-only" data-tab="admin" style="display: none;">
-                        <i class="fas fa-users-cog"></i> Admin Panel
-                    </a>
-                    <a href="#pipeline" class="nav-link admin-only" data-tab="pipeline" style="display: none;">
-                        <i class="fas fa-cogs"></i> Pipeline
-                    </a>
-                </div>
-                <div class="user-info">
-                    <span id="user-email"></span>
-                    <button class="theme-toggle" onclick="toggleTheme()">
-                        <i class="fas fa-moon" id="theme-icon"></i>
-                    </button>
-                    <button class="btn btn-secondary btn-sm" onclick="logout()">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                </div>
-            </div>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CivicBriefs.ai Control Panel</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>CivicBriefs.ai</h1>
+      <small>Agentic UPSC mentor — automated pipeline + reports</small>
+    </header>
+    <main>
+      <div class="toolbar">
+        <div class="tabs">
+          <button class="tab active" data-tab="capsuleTab">Capsule</button>
+          <button class="tab" data-tab="subsTab">Subscriptions</button>
+          <button class="tab" data-tab="chatTab">Chat</button>
+          <button class="tab" data-tab="utilsTab">Utilities</button>
         </div>
-    </nav>
-
-    <main class="main-content">
-        <!-- Dashboard Tab -->
-        <div id="dashboard" class="tab-content active">
-            <div class="hero-section">
-                <h2>Welcome to CivicBriefs.ai</h2>
-                <p>Your Autonomous UPSC Preparation Mentor</p>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <i class="fas fa-newspaper"></i>
-                        <h3 id="news-count">0</h3>
-                        <p>News Articles</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-users"></i>
-                        <h3 id="subscriber-count">0</h3>
-                        <p>Subscribers</p>
-                    </div>
-                    <div class="stat-card">
-                        <i class="fas fa-calendar"></i>
-                        <h3 id="capsule-date">Today</h3>
-                        <p>Latest Capsule</p>
-                    </div>
-                </div>
-            </div>
+        <div class="right">
+          <a href="/login"><button id="loginBtn" type="button">Login</button></a>
+          <a href="/signup"><button id="signupBtn" type="button">Sign Up</button></a>
+          <button id="logoutBtn" type="button" hidden>Logout</button>
+          <button id="themeToggle" type="button">Toggle Theme</button>
         </div>
+      </div>
 
-        <!-- Daily Capsule Tab -->
-        <div id="capsule" class="tab-content">
-            <div class="section-header">
-                <h2><i class="fas fa-newspaper"></i> Daily UPSC Capsule</h2>
-                <button id="refresh-capsule" class="btn btn-primary">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
-            </div>
-            <div id="capsule-content" class="card">
-                <div class="loading">Loading capsule...</div>
-            </div>
+      <section id="capsuleTab">
+        <div class="row">
+          <button id="btnCapsule" class="primary">View Today&#39;s Capsule</button>
+          <button id="btnPipeline" hidden>Run Pipeline Now</button>
         </div>
+        <div id="capsule"></div>
+      </section>
 
-        <!-- Admin Panel Tab -->
-        <div id="admin" class="tab-content">
-            <div class="section-header">
-                <h2><i class="fas fa-users-cog"></i> Admin Panel</h2>
-            </div>
-            
-            <div class="admin-section">
-                <div class="card">
-                    <h3>Pending Subscription Requests</h3>
-                    <div id="pending-requests">
-                        <div class="loading">Loading requests...</div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3>User Management</h3>
-                    <div id="users-list">
-                        <div class="loading">Loading users...</div>
-                    </div>
-                </div>
-            </div>
+      <section id="subsTab" hidden>
+        <div class="row">
+          <input id="email" placeholder="you@example.com" />
+          <button id="btnSubDaily">Subscribe Daily</button>
+          <button id="btnUnsubDaily">Unsubscribe Daily</button>
         </div>
-
-        <!-- Pipeline Tab -->
-        <div id="pipeline" class="tab-content">
-            <div class="section-header">
-                <h2><i class="fas fa-cogs"></i> Pipeline Control</h2>
-            </div>
-            <div class="pipeline-section card">
-                <div class="pipeline-controls">
-                    <button id="run-pipeline" class="btn btn-primary">
-                        <i class="fas fa-play"></i> Run Full Pipeline
-                    </button>
-                    <button id="ingest-news" class="btn btn-secondary">
-                        <i class="fas fa-download"></i> Ingest News Only
-                    </button>
-                </div>
-                <div class="pipeline-status">
-                    <h3>Pipeline Logs</h3>
-                    <div id="pipeline-logs" class="logs-container">
-Ready to run pipeline...
-                    </div>
-                </div>
-            </div>
+        <div class="row">
+          <button id="btnSubWeekly">Subscribe Weekly</button>
+          <button id="btnUnsubWeekly">Unsubscribe Weekly</button>
+          <button id="btnWeeklyPreview">Preview Weekly</button>
+          <button id="btnWeeklySend" class="primary" hidden>Send Weekly</button>
         </div>
+        <table class="table" style="margin-top:8px">
+          <thead><tr><th>Email</th><th>Name</th><th>Type</th></tr></thead>
+          <tbody id="subsTable"></tbody>
+        </table>
+        <pre id="subsOut" class="out"></pre>
+      </section>
 
+      <section id="chatTab" hidden>
+        <div class="row">
+          <input id="question" placeholder="Ask a UPSC question" style="flex:1" />
+          <button id="btnAsk" class="primary">Ask</button>
+        </div>
+        <pre id="chatOut" class="out"></pre>
+      </section>
 
+      <section id="utilsTab" hidden>
+        <div class="row">
+          <button id="btnSample">Add Sample News</button>
+          <button id="btnPlan">Generate Study Plan</button>
+        </div>
+        <pre id="utilOut" class="out"></pre>
+      </section>
     </main>
-
-    <div id="notification" class="notification"></div>
-
-    <script src="/static/script.js"></script>
-</body>
-</html>
+    <div class="toast" id="toast"><span id="toastMsg"></span></div>
+    <script src="/static/main.js"></script>
+  </body>
+  </html>

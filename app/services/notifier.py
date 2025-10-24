@@ -141,3 +141,28 @@ def send_password_reset_email(recipient_email: str, reset_link: str) -> bool:
     except Exception as e:
         print(f"Failed to send reset email to {recipient_email}: {e}")
         return False
+
+
+def send_bulk_html_emails(subscribers: List[str], subject: str, html_content: str) -> Dict[str, int]:
+    """Generic bulk HTML email sender using the same SMTP settings."""
+    settings = get_settings()
+    results = {"sent": 0, "failed": 0}
+    if not all([settings.smtp_server, settings.smtp_port, settings.smtp_username, settings.smtp_password]):
+        print("SMTP not configured, skipping weekly emails")
+        return results
+    try:
+        for email in subscribers:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = settings.smtp_username
+            msg['To'] = email
+            msg.attach(MIMEText(html_content, 'html'))
+            with smtplib.SMTP(settings.smtp_server, settings.smtp_port) as server:
+                server.starttls()
+                server.login(settings.smtp_username, settings.smtp_password)
+                server.send_message(msg)
+            results["sent"] += 1
+    except Exception as e:
+        print(f"Weekly email error: {e}")
+        results["failed"] += 1
+    return results

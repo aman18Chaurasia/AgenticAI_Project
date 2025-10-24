@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlmodel import Session, select
 from datetime import datetime, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import jwt
 from ...core.db import get_session
 from ...core.config import get_settings
@@ -78,8 +78,13 @@ def request_subscription(request: SubscriptionRequestCreate, session: Session = 
     
     return {"message": "Subscription request submitted. Admin will review shortly."}
 
+class ForgotBody(BaseModel):
+    email: EmailStr
+
+
 @router.post("/forgot-password")
-def forgot_password(email: str, session: Session = Depends(get_session)):
+def forgot_password(body: ForgotBody, session: Session = Depends(get_session)):
+    email = str(body.email).lower().strip()
     user = session.exec(select(User).where(User.email == email)).first()
     if not user:
         return {"message": "If account exists, password reset instructions sent to email"}

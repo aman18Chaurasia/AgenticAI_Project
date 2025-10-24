@@ -17,21 +17,21 @@ logger = logging.getLogger(__name__)
 
 def run_full_agentic_pipeline() -> None:
     """Run complete autonomous pipeline: ingest -> map -> plan -> report -> email"""
-    print(f"\n🤖 Starting Autonomous UPSC Pipeline - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"\nStarting Autonomous UPSC Pipeline - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     # Run all agents
     agents = [NewsAgent(), MappingAgent(), PlannerAgent(), ReporterAgent()]
     for agent in agents:
         result = agent.run()
-        status = "✅" if result.success else "❌"
-        print(f"{status} {result.name}: {result.detail}")
-    
+        status = "OK" if result.success else "FAIL"
+        print(f"[{status}] {result.name}: {result.detail}")
+
     # Generate and send daily capsules
     with Session(engine) as session:
         # Build today's capsule
         capsule = build_daily_capsule(session)
-        
+
         # Get all subscribed users
         subscribers = session.exec(
             select(User.email).where(
@@ -39,16 +39,16 @@ def run_full_agentic_pipeline() -> None:
                 User.is_active == True
             )
         ).all()
-        
+
         if subscribers and capsule["items"]:
             # Send emails to all subscribers
             results = send_bulk_capsule_emails(list(subscribers), capsule)
-            print(f"📧 Emails sent: {results['sent']}, failed: {results['failed']}")
-            print(f"📊 Capsule items: {len(capsule['items'])}")
+            print(f"Emails sent: {results['sent']}, failed: {results['failed']}")
+            print(f"Capsule items: {len(capsule['items'])}")
         else:
-            print("📭 No subscribers or no content to send")
-    
-    print("\n🎯 Autonomous pipeline completed successfully!")
+            print("No subscribers or no content to send")
+
+    print("\nAutonomous pipeline completed.")
     print("=" * 60)
 
 
@@ -59,23 +59,23 @@ def run_once() -> None:
 
 def schedule_daily() -> None:
     """Schedule autonomous pipeline to run daily at 6 AM"""
-    print("🕕 Starting Autonomous UPSC Pipeline Scheduler...")
-    print("📅 Daily execution: 6:00 AM")
-    print("🔄 Press Ctrl+C to stop\n")
-    
+    print("Starting Autonomous UPSC Pipeline Scheduler...")
+    print("Daily execution: 6:00 AM")
+    print("Press Ctrl+C to stop\n")
+
     sched = BlockingScheduler()
     sched.add_job(
-        run_full_agentic_pipeline, 
-        "cron", 
-        hour=6, 
+        run_full_agentic_pipeline,
+        "cron",
+        hour=6,
         minute=0,
         id="daily_upsc_pipeline"
     )
-    
+
     try:
         sched.start()
     except KeyboardInterrupt:
-        print("\n🛑 Scheduler stopped by user")
+        print("\nScheduler stopped by user")
         sched.shutdown()
 
 

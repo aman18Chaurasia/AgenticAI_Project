@@ -1,6 +1,23 @@
 [
   {"year": 2021, "paper": "GS2", "question": "Discuss the significance of fundamental duties in the Indian Constitution.", "keywords": "Constitution fundamental duties"},
   {"year": 2020, "paper": "GS3", "question": "Enumerate measures to control inflation while sustaining growth.", "keywords": "inflation growth fiscal"},
-  {"year": 2019, "paper": "GS3", "question": "Explain the importance of biodiversity conservation in climate resilience.", "keywords": "biodiversity climate"}
+  {"year": 2019, "paper": "GS3", "question": "Explain the importance of biodiversity conservation in climate resilience.", "keywords": "biodiversity climate"},
+  {"year": 2023, "paper": "GS2", "question": "Analyze the role of media in democracy and challenges to press freedom.", "keywords": "media democracy press freedom journalism"},
+  {"year": 2022, "paper": "GS2", "question": "Discuss the impact of social media on electoral processes.", "keywords": "social media elections democracy"},
+  {"year": 2021, "paper": "GS2", "question": "Examine the challenges to India's foreign policy in changing global order.", "keywords": "foreign policy international relations"},
+  {"year": 2020, "paper": "GS2", "question": "Analyze India-US relations and their strategic implications.", "keywords": "India US bilateral relations strategic"},
+  {"year": 2019, "paper": "GS2", "question": "Discuss the role of civil services in governance and administration.", "keywords": "civil services governance administration"},
+  {"year": 2023, "paper": "GS3", "question": "Evaluate the impact of climate change on agriculture and food security.", "keywords": "climate change agriculture food security"},
+  {"year": 2022, "paper": "GS3", "question": "Discuss the challenges and opportunities in renewable energy sector.", "keywords": "renewable energy solar wind"},
+  {"year": 2021, "paper": "GS3", "question": "Analyze the role of technology in financial inclusion.", "keywords": "technology fintech digital payments"},
+  {"year": 2020, "paper": "GS3", "question": "Examine the impact of COVID-19 on Indian economy.", "keywords": "COVID pandemic economy recession"},
+  {"year": 2023, "paper": "GS1", "question": "Discuss the changing patterns of urbanization in India.", "keywords": "urbanization cities migration"},
+  {"year": 2022, "paper": "GS1", "question": "Analyze the impact of globalization on Indian culture.", "keywords": "globalization culture tradition"},
+  {"year": 2021, "paper": "GS1", "question": "Examine the role of women in Indian freedom struggle.", "keywords": "women freedom struggle independence"},
+  {"year": 2024, "paper": "GS2", "question": "Discuss the challenges in India-China border management.", "keywords": "India China border LAC security"},
+  {"year": 2024, "paper": "GS3", "question": "Analyze the potential of artificial intelligence in governance.", "keywords": "artificial intelligence AI governance technology"},
+  {"year": 2023, "paper": "GS2", "question": "Evaluate the effectiveness of RTI Act in promoting transparency.", "keywords": "RTI transparency accountability governance"},
+  {"year": 2022, "paper": "GS3", "question": "Discuss the challenges in cybersecurity and data protection.", "keywords": "cybersecurity data protection privacy"},
+  {"year": 2021, "paper": "GS3", "question": "Examine the role of startups in economic development.", "keywords": "startups entrepreneurship innovation economy"}
 ]
 

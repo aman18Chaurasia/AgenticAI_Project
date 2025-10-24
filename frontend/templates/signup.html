@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Create Account</h1>
+      <input id="semail" placeholder="email" />
+      <input id="sname" placeholder="full name" />
+      <input id="spass" type="password" placeholder="password" />
+      <div class="row">
+        <button id="btnSignup" class="primary">Sign Up</button>
+        <a href="/login"><button type="button">Login</button></a>
+      </div>
+      <pre id="signupOut" class="out"></pre>
+    </main>
+    <script>
+      const $ = (id)=>document.getElementById(id);
+      document.getElementById('btnSignup').onclick = async ()=>{
+        const payload = {email: $('semail').value, full_name: $('sname').value, password: $('spass').value};
+        const res = await fetch('/users/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const data = await res.json().catch(()=>({}));
+        if(res.ok){
+          // Auto-login
+          const login = await fetch('/users/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email: payload.email, password: payload.password})});
+          const tok = await login.json().catch(()=>({}));
+          if(login.ok && tok.access_token){ localStorage.setItem('token', tok.access_token); location.href='/'; }
+          else { location.href='/login'; }
+        } else {
+          $('signupOut').textContent = JSON.stringify(data,null,2);
+        }
+      };
+    </script>
+  </body>
+  </html>
+

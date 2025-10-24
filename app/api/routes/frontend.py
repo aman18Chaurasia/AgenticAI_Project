@@ -19,11 +19,27 @@ async def login_page():
     with open(login_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
+
+@router.get("/signup", response_class=HTMLResponse)
+async def signup_page():
+    """Serve the signup page"""
+    signup_path = os.path.join(os.path.dirname(__file__), "../../../frontend/templates/signup.html")
+    with open(signup_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
 @router.get("/reset-password", response_class=HTMLResponse)
 async def reset_password_page():
     """Serve the reset password page"""
     reset_path = os.path.join(os.path.dirname(__file__), "../../../frontend/templates/reset-password.html")
     with open(reset_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(content=f.read())
+
+
+@router.get("/forgot", response_class=HTMLResponse)
+async def forgot_page():
+    """Serve the forgot password page"""
+    path = os.path.join(os.path.dirname(__file__), "../../../frontend/templates/forgot.html")
+    with open(path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 @router.get("/static/{file_path:path}")

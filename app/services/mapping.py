@@ -26,13 +26,75 @@ def map_news_to_syllabus(session: Session) -> int:
     return created
 
 
+def extract_key_entities(text: str) -> List[str]:
+    """Extract key entities and topics from news text"""
+    # Simple keyword extraction based on common UPSC topics
+    upsc_keywords = {
+        'governance': ['government', 'policy', 'administration', 'bureaucracy', 'civil service'],
+        'economy': ['economic', 'gdp', 'inflation', 'fiscal', 'monetary', 'trade', 'investment'],
+        'international': ['foreign', 'diplomatic', 'bilateral', 'multilateral', 'treaty', 'agreement'],
+        'security': ['defense', 'military', 'border', 'terrorism', 'cyber', 'national security'],
+        'environment': ['climate', 'environment', 'pollution', 'renewable', 'biodiversity', 'conservation'],
+        'social': ['education', 'health', 'poverty', 'inequality', 'welfare', 'rights'],
+        'technology': ['digital', 'artificial intelligence', 'technology', 'innovation', 'startup'],
+        'constitution': ['constitutional', 'fundamental rights', 'duties', 'amendment', 'judiciary']
+    }
+    
+    text_lower = text.lower()
+    found_topics = []
+    
+    for topic, keywords in upsc_keywords.items():
+        if any(keyword in text_lower for keyword in keywords):
+            found_topics.append(topic)
+    
+    return found_topics
+
 def find_related_pyqs(session: Session, text: str, top_k: int = 3) -> List[Dict]:
     pyqs = session.exec(select(PyqQuestion)).all()
-    corpus = [f"{p.paper} {p.year} {p.question} {p.keywords or ''}" for p in pyqs]
-    ranked = tfidf_similarity(text, corpus)[:top_k]
-    out: List[Dict] = []
-    for idx, score in ranked:
-        p = pyqs[idx]
-        out.append({"id": p.id, "year": p.year, "paper": p.paper, "question": p.question, "score": float(score)})
-    return out
+    if not pyqs:
+        return []
+    
+    # Extract key topics from news
+    news_topics = extract_key_entities(text)
+    
+    # Enhanced matching with topic relevance
+    scored_pyqs = []
+    
+    for p in pyqs:
+        # Base similarity score
+        question_text = f"{p.question} {p.keywords or ''}"
+        base_scores = tfidf_similarity(text, [question_text])
+        base_score = base_scores[0][1] if base_scores else 0.0
+        
+        # Topic relevance bonus
+        topic_bonus = 0.0
+        pyq_topics = extract_key_entities(p.question + ' ' + (p.keywords or ''))
+        common_topics = set(news_topics) & set(pyq_topics)
+        if common_topics:
+            topic_bonus = len(common_topics) * 0.2  # Bonus for topic match
+        
+        final_score = base_score + topic_bonus
+        
+        scored_pyqs.append({
+            "id": p.id,
+            "year": p.year,
+            "paper": p.paper,
+            "question": p.question,
+            "score": float(final_score),
+            "topics_matched": list(common_topics)
+        })
+    
+    # Sort by score and return top matches
+    scored_pyqs.sort(key=lambda x: x['score'], reverse=True)
+    
+    # Filter out very low scores (< 0.05)
+    relevant_pyqs = [p for p in scored_pyqs if p['score'] > 0.05][:top_k]
+    
+    # If no relevant matches, return top 3 with warning
+    if not relevant_pyqs:
+        relevant_pyqs = scored_pyqs[:top_k]
+        for p in relevant_pyqs:
+            p['score'] = 0.01  # Low confidence score
+    
+    return relevant_pyqs
 

@@ -16,6 +16,9 @@ from .api.routes.frontend import router as frontend_router
 from .api.routes.pipeline import router as pipeline_router
 from .api.routes.auth import router as auth_router
 from .api.routes.admin import router as admin_router
+from .api.routes.chat import router as chat_router
+from .api.routes.reports import router as reports_router
+from .api.routes.password import router as password_router
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,9 @@ app.include_router(subscription_router, prefix="/subscription", tags=["subscript
 app.include_router(pipeline_router, prefix="/pipeline", tags=["pipeline"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(admin_router, prefix="/admin", tags=["admin"])
+app.include_router(chat_router)
+app.include_router(reports_router)
+app.include_router(password_router)
 
 
 @app.on_event("startup")

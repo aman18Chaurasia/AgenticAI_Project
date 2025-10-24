@@ -87,6 +87,38 @@ def get_subscribers(session: Session = Depends(get_session)):
     return {"subscribers": [{"email": s[0], "name": s[1]} for s in subscribers]}
 
 
+@router.post("/subscribe-weekly/{email}")
+def subscribe_weekly(email: str, session: Session = Depends(get_session)):
+    """Subscribe an email to weekly report emails"""
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.weekly_report_subscribed:
+        return {"message": f"{email} is already subscribed to weekly reports"}
+    user.weekly_report_subscribed = True
+    session.add(user)
+    session.commit()
+    return {"message": f"Successfully subscribed {email} to weekly reports"}
+
+
+@router.post("/unsubscribe-weekly/{email}")
+def unsubscribe_weekly(email: str, session: Session = Depends(get_session)):
+    """Unsubscribe an email from weekly report emails"""
+    user = session.exec(select(User).where(User.email == email)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.weekly_report_subscribed = False
+    session.add(user)
+    session.commit()
+    return {"message": f"Successfully unsubscribed {email} from weekly reports"}
+
+
+@router.get("/weekly-subscribers")
+def get_weekly_subscribers(session: Session = Depends(get_session)):
+    items = session.exec(select(User.email, User.full_name).where(User.weekly_report_subscribed == True)).all()
+    return {"subscribers": [{"email": s[0], "name": s[1]} for s in items]}
+
+
 @router.post("/send-missed/{email}")
 def send_missed_capsules_manual(email: str, days: int = 7, session: Session = Depends(get_session)):
     """Manually send missed capsules to a subscriber"""

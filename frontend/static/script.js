@@ -57,8 +57,39 @@ class CivicBriefsApp {
 
     setupEventListeners() {
         document.getElementById('refresh-capsule').addEventListener('click', () => this.loadCapsule());
-        document.getElementById('run-pipeline').addEventListener('click', () => this.runPipeline());
-        document.getElementById('ingest-news').addEventListener('click', () => this.ingestNews());
+        
+        const runPipelineBtn = document.getElementById('run-pipeline');
+        if (runPipelineBtn) {
+            runPipelineBtn.addEventListener('click', () => this.runPipeline());
+        }
+        
+        const ingestNewsBtn = document.getElementById('ingest-news');
+        if (ingestNewsBtn) {
+            ingestNewsBtn.addEventListener('click', () => this.ingestNews());
+        }
+        
+        // Chat functionality - with error handling
+        const sendChatBtn = document.getElementById('send-chat');
+        const chatInput = document.getElementById('chat-input');
+        
+        if (sendChatBtn && chatInput) {
+            sendChatBtn.addEventListener('click', () => this.sendChatMessage());
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.sendChatMessage();
+            });
+        } else {
+            console.log('Chat elements not found, will retry in 1 second');
+            setTimeout(() => {
+                const sendChatBtn2 = document.getElementById('send-chat');
+                const chatInput2 = document.getElementById('chat-input');
+                if (sendChatBtn2 && chatInput2) {
+                    sendChatBtn2.addEventListener('click', () => this.sendChatMessage());
+                    chatInput2.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') this.sendChatMessage();
+                    });
+                }
+            }, 1000);
+        }
     }
 
     async apiCall(endpoint, method = 'GET', body = null) {
@@ -365,6 +396,131 @@ class CivicBriefsApp {
         const icon = document.getElementById('theme-icon');
         if (icon) {
             icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+
+    async sendChatMessage() {
+        console.log('sendChatMessage called');
+        const input = document.getElementById('chat-input');
+        const message = input?.value?.trim();
+        
+        if (!message) {
+            console.log('No message to send');
+            return;
+        }
+        
+        console.log('Sending message:', message);
+        
+        // Add user message
+        this.addChatMessage(message, 'user');
+        input.value = '';
+        
+        // Add loading message
+        const loadingId = this.addChatMessage('Thinking...', 'bot', true);
+        
+        try {
+            // Direct fetch without auth for testing
+            const response = await fetch(`${this.baseURL}/chat/ask`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: message })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Chat response:', data);
+            
+            // Remove loading message
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) loadingElement.remove();
+            
+            // Add bot response
+            if (data.pyqs && data.pyqs.length > 0) {
+                this.addChatMessage(data.response, 'bot');
+                
+                // Add PYQ cards
+                data.pyqs.forEach(pyq => {
+                    this.addPYQCard(pyq);
+                });
+            } else {
+                this.addChatMessage(data.response || 'Sorry, I could not find relevant information.', 'bot');
+            }
+            
+        } catch (error) {
+            console.error('Chat error:', error);
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) loadingElement.remove();
+            this.addChatMessage('Sorry, I encountered an error: ' + error.message, 'bot');
+        }
+    }
+    
+    addChatMessage(message, sender, isLoading = false) {
+        const messagesContainer = document.getElementById('chat-messages');
+        const messageId = 'msg-' + Date.now();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.id = messageId;
+        messageDiv.className = `chat-message ${sender}-message`;
+        
+        const icon = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        const loadingClass = isLoading ? ' loading-message' : '';
+        
+        messageDiv.innerHTML = `
+            <div class="message-content${loadingClass}">
+                ${icon}
+                <span>${message}</span>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        return messageId;
+    }
+    
+    addPYQCard(pyq) {
+        const messagesContainer = document.getElementById('chat-messages');
+        
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'chat-message bot-message pyq-card';
+        
+        cardDiv.innerHTML = `
+            <div class="pyq-content">
+                <div class="pyq-header">
+                    <span class="pyq-paper">${pyq.paper} ${pyq.year}</span>
+                    <button class="btn btn-sm btn-secondary" onclick="app.showPYQAnswer(${pyq.id})">
+                        <i class="fas fa-lightbulb"></i> Get Answer
+                    </button>
+                </div>
+                <div class="pyq-question">${pyq.question}</div>
+                <div class="pyq-framework" id="framework-${pyq.id}" style="display: none;"></div>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(cardDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    async showPYQAnswer(pyqId) {
+        const frameworkDiv = document.getElementById(`framework-${pyqId}`);
+        
+        if (frameworkDiv.style.display === 'block') {
+            frameworkDiv.style.display = 'none';
+            return;
+        }
+        
+        try {
+            const response = await this.apiCall(`/chat/pyq/${pyqId}`);
+            frameworkDiv.innerHTML = `<pre class="answer-framework">${response.answer}</pre>`;
+            frameworkDiv.style.display = 'block';
+        } catch (error) {
+            frameworkDiv.innerHTML = '<p class="error">Failed to load answer framework.</p>';
+            frameworkDiv.style.display = 'block';
         }
     }
 
