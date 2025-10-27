@@ -1,8 +1,11 @@
 from typing import List
+import os
 from sqlmodel import Session, select
 from ..core.config import get_settings
 from ..models.content import NewsItem
 from ..schemas.news import NewsIn, NewsOut
+from .content_extract import extract_article_text
+from .summarizer import summarize_text, summarize_news_article
 
 
 def fetch_and_parse_feeds() -> List[NewsIn]:
@@ -44,6 +47,27 @@ def save_news_items(session: Session, items: List[NewsIn]) -> List[NewsOut]:
         session.add(entity)
         session.commit()
         session.refresh(entity)
+
+        # Enrich: fetch full article text and compute high‑quality summary
+        try:
+            full = extract_article_text(entity.url)
+            if full and len(full) > 500:
+                entity.content = full
+        except Exception:
+            pass
+        try:
+            base = entity.content or it.content or ""
+            if base:
+                # Prefer news‑style summary when using LLM backend
+                if (os.getenv("SUMMARIZER_BACKEND", "textrank").lower() == "hf"):
+                    entity.summary = summarize_news_article(entity.title, base, url=entity.url)
+                else:
+                    entity.summary = summarize_text(base, max_sentences=7)
+        except Exception:
+            pass
+        session.add(entity)
+        session.commit()
+        session.refresh(entity)
         saved.append(
             NewsOut(
                 id=entity.id or 0,
@@ -55,4 +79,3 @@ def save_news_items(session: Session, items: List[NewsIn]) -> List[NewsOut]:
             )
         )
     return saved
-

@@ -19,6 +19,8 @@ class Settings(BaseModel):
     cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:8000")
     news_feeds: str = os.getenv("NEWS_FEEDS", "")
     schedule_cron_daily: str = os.getenv("SCHEDULE_CRON_DAILY", "0 6 * * *")
+    schedule_cron_quiz: str = os.getenv("SCHEDULE_CRON_QUIZ", "0 7 * * *")
+    schedule_cron_weekly_report: str = os.getenv("SCHEDULE_CRON_WEEKLY_REPORT", "0 8 * * 0")
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     
     # Email settings

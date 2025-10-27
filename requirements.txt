@@ -18,3 +18,6 @@ numpy==2.1.1
 pandas==2.2.3
 orjson==3.10.7
 tenacity==9.0.0
+trafilatura==1.7.0
+sumy==0.11.0
+beautifulsoup4==4.12.3

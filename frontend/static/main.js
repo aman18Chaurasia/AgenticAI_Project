@@ -28,6 +28,37 @@ function renderCapsule(container, cap){
   });
 }
 
+function renderQuiz(container, quiz){
+  container.innerHTML = '';
+  if(!quiz || !Array.isArray(quiz.questions) || quiz.questions.length === 0){
+    container.innerHTML = '<div class="muted">No quiz available for today. Generate capsule or check later.</div>';
+    return;
+  }
+  const meta = document.getElementById('quizMeta');
+  if(meta){ meta.textContent = `${quiz.name || 'Daily Quiz'} — ${quiz.questions.length} questions`; }
+  // Keep name for submit
+  container.dataset.quizName = quiz.name || 'Daily Quiz';
+  quiz.questions.forEach((q, idx)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    const options = (q.options||[]).map((opt, oi)=>{
+      const id = `q${idx}_opt${oi}`;
+      return `
+        <div class="row-sm">
+          <input type="radio" id="${id}" name="q${idx}" value="${oi}" />
+          <label for="${id}">${String.fromCharCode(65+oi)}. ${opt}</label>
+        </div>
+      `;
+    }).join('');
+    card.innerHTML = `
+      <div><strong>Q${idx+1}.</strong> ${q.q}</div>
+      ${q.context ? `<div class="muted-sm">Context: ${q.context.slice(0,200)}</div>` : ''}
+      <div style="margin-top:6px;">${options}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
 function setActiveTab(tabId){
   document.querySelectorAll('section').forEach(s=>s.hidden=true);
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
@@ -137,8 +168,121 @@ window.addEventListener('DOMContentLoaded', ()=>{
     const {data} = await api('/schedule/generate',{method:'POST'});
     $('utilOut').textContent = JSON.stringify(data,null,2);
   };
+  // Quiz wiring
+  const quizContainer = $('quizContainer');
+  const btnQuizLoad = $('btnQuizLoad');
+  const btnQuizSubmit = $('btnQuizSubmit');
+  const btnQuizProgress = $('btnQuizProgress');
+  if(btnQuizLoad){
+    btnQuizLoad.onclick = async ()=>{
+      try{
+        // Force regenerate to ensure latest logic and LLM output
+        await api('/tests/generate/daily?force=1',{method:'POST'});
+        const {ok, data} = await api('/tests/today');
+        if(ok){ renderQuiz(quizContainer, data); toast('Quiz loaded'); }
+        else { $('quizOut').textContent = JSON.stringify(data,null,2); toast('Unable to load quiz'); }
+      }catch(e){
+        $('quizOut').textContent = String(e);
+        toast('Quiz load error');
+      }
+    };
+  }
+  if(btnQuizSubmit){
+    btnQuizSubmit.onclick = async ()=>{
+      const token = localStorage.getItem('token');
+      if(!token){ toast('Login required to submit'); return; }
+      const answers = [];
+      const cards = quizContainer.querySelectorAll('.card');
+      cards.forEach((card, i)=>{
+        const sel = card.querySelector(`input[name="q${i}"]:checked`);
+        answers.push(sel ? parseInt(sel.value, 10) : -1);
+      });
+      const name = quizContainer.dataset.quizName || 'Daily Quiz';
+      const res = await fetch('/tests/submit',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({name, answers})
+      });
+      const data = await res.json().catch(()=>({}));
+      $('quizOut').textContent = JSON.stringify(data,null,2);
+      if(res.ok){ toast(`Score: ${data.score}`); }
+      else { toast('Submit failed'); }
+    };
+  }
+  if(btnQuizProgress){
+    btnQuizProgress.onclick = async ()=>{
+      const token = localStorage.getItem('token');
+      if(!token){ toast('Login required'); return; }
+      const [resP, resH] = await Promise.all([
+        fetch('/tests/progress',{headers:{'Authorization':'Bearer '+token}}),
+        fetch('/tests/history',{headers:{'Authorization':'Bearer '+token}})
+      ]);
+      const dataP = await resP.json().catch(()=>({}));
+      const dataH = await resH.json().catch(()=>([]));
+      $('quizOut').textContent = JSON.stringify({summary: dataP, history: dataH},null,2);
+      // draw chart
+      const canvas = document.getElementById('quizChart');
+      if(canvas && canvas.getContext){ drawQuizChart(canvas, dataH); }
+    };
+  }
+
+  function drawQuizChart(canvas, history){
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    // axes
+    ctx.strokeStyle = '#888';
+    ctx.beginPath(); ctx.moveTo(30,10); ctx.lineTo(30,H-30); ctx.lineTo(W-10,H-30); ctx.stroke();
+    // labels
+    ctx.fillStyle = '#666'; ctx.font = '12px Arial';
+    ctx.fillText('Score', 4, 12);
+    ctx.fillText('Tests', W-60, H-10);
+    // bars
+    const n = Math.max(1, history.length);
+    const barW = Math.max(6, Math.floor((W-50)/n) - 4);
+    history.forEach((it, i)=>{
+      const score = Math.max(0, Math.min(100, it.score||0));
+      const x = 32 + i*(barW+4);
+      const y = (H-30) - Math.round((score/100)*(H-50));
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(x, y, barW, (H-30)-y);
+    });
+    // y ticks 0,50,100
+    ctx.fillStyle = '#444';
+    [0,50,100].forEach(v=>{
+      const y = (H-30) - Math.round((v/100)*(H-50));
+      ctx.fillText(String(v), 4, y+4);
+      ctx.strokeStyle = '#eee';
+      ctx.beginPath(); ctx.moveTo(30,y); ctx.lineTo(W-10,y); ctx.stroke();
+    });
+  }
   // Initial
   setActiveTab('capsuleTab');
   $('btnCapsule').click();
   loadSubsTable();
+
+  // Plan tab wiring
+  async function loadPlan(){
+    const headers = token? {'Authorization':'Bearer '+token} : {};
+    const res = await fetch('/plan/me', {headers});
+    const data = await res.json().catch(()=>({}));
+    const sum = $('planSummary'); const weeks = $('planWeeks');
+    weeks.innerHTML = '';
+    if(!data.plan){ sum.textContent = 'No plan yet. Click Recompute to generate.'; return; }
+    const fb = data.plan.feedback_summary || {};
+    sum.textContent = `Tests: ${fb.tests_considered||0} | Avg Score: ${fb.average_score||0} | Weak: ${(fb.weak_topics||[]).join(', ')}`;
+    (data.plan.weeks||[]).forEach(w=>{
+      const card = document.createElement('div'); card.className='card';
+      const tasks = (w.tasks||[]).map(t=>`<li>${t}</li>`).join('');
+      card.innerHTML = `<div><strong>Week ${w.week}</strong> — Hours: ${w.hours}</div><ul>${tasks}</ul>`;
+      weeks.appendChild(card);
+    });
+  }
+  const blp = $('btnLoadPlan'); if(blp){ blp.onclick = loadPlan; }
+  const brp = $('btnRecomputePlan'); if(brp){ brp.onclick = async ()=>{
+    const headers = {'Content-Type':'application/json', ...(token? {'Authorization':'Bearer '+token}: {})};
+    const res = await fetch('/plan/recompute',{method:'POST', headers});
+    await res.json().catch(()=>({}));
+    await loadPlan(); toast('Plan recomputed');
+  }; }
 });

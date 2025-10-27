@@ -19,6 +19,9 @@ from .api.routes.admin import router as admin_router
 from .api.routes.chat import router as chat_router
 from .api.routes.reports import router as reports_router
 from .api.routes.password import router as password_router
+from .api.routes.tests import router as tests_router
+from .api.routes.maintenance import router as maintenance_router
+from .api.routes.plan import router as plan_router
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +50,23 @@ app.include_router(admin_router, prefix="/admin", tags=["admin"])
 app.include_router(chat_router)
 app.include_router(reports_router)
 app.include_router(password_router)
+app.include_router(maintenance_router)
+app.include_router(plan_router)
+app.include_router(tests_router)
 
 
 @app.on_event("startup")
 def on_startup() -> None:
     if settings.database_url.startswith("sqlite"):  # ensure folder
         os.makedirs("data", exist_ok=True)
+    # Ensure all models are imported so SQLModel sees them
+    try:
+        from .models import user as _mu  # noqa: F401
+        from .models import content as _mc  # noqa: F401
+        from .models import tests as _mt  # noqa: F401
+    except Exception:
+        # Safe to continue; create_all will handle present models
+        pass
     SQLModel.metadata.create_all(engine)
 
 

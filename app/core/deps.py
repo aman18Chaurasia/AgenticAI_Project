@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import Session
@@ -30,3 +31,19 @@ def require_admin(user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
+
+def get_current_user_optional(
+    creds: HTTPAuthorizationCredentials = Depends(bearer),
+    session: Session = Depends(get_session),
+) -> Optional[User]:
+    try:
+        if not creds or creds.scheme.lower() != "bearer":
+            return None
+        payload = decode_access_token(creds.credentials)
+        uid = int(payload.get("sub"))
+        user = session.get(User, uid)
+        if not user or not user.is_active:
+            return None
+        return user
+    except Exception:
+        return None

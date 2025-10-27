@@ -17,15 +17,14 @@ logger = logging.getLogger(__name__)
 
 def run_full_agentic_pipeline() -> None:
     """Run complete autonomous pipeline: ingest -> map -> plan -> report -> email"""
-    print(f"\nStarting Autonomous UPSC Pipeline - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+    logger.info("Starting Autonomous UPSC Pipeline - %s", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     # Run all agents
     agents = [NewsAgent(), MappingAgent(), PlannerAgent(), ReporterAgent()]
     for agent in agents:
         result = agent.run()
         status = "OK" if result.success else "FAIL"
-        print(f"[{status}] {result.name}: {result.detail}")
+        logger.info("[%s] %s: %s", status, result.name, result.detail)
 
     # Generate and send daily capsules
     with Session(engine) as session:
@@ -43,13 +42,12 @@ def run_full_agentic_pipeline() -> None:
         if subscribers and capsule["items"]:
             # Send emails to all subscribers
             results = send_bulk_capsule_emails(list(subscribers), capsule)
-            print(f"Emails sent: {results['sent']}, failed: {results['failed']}")
-            print(f"Capsule items: {len(capsule['items'])}")
+            logger.info("Emails sent: %s, failed: %s", results['sent'], results['failed'])
+            logger.info("Capsule items: %s", len(capsule['items']))
         else:
-            print("No subscribers or no content to send")
+            logger.info("No subscribers or no content to send")
 
-    print("\nAutonomous pipeline completed.")
-    print("=" * 60)
+    logger.info("Autonomous pipeline completed.")
 
 
 def run_once() -> None:
@@ -59,9 +57,9 @@ def run_once() -> None:
 
 def schedule_daily() -> None:
     """Schedule autonomous pipeline to run daily at 6 AM"""
-    print("Starting Autonomous UPSC Pipeline Scheduler...")
-    print("Daily execution: 6:00 AM")
-    print("Press Ctrl+C to stop\n")
+    logger.info("Starting Autonomous UPSC Pipeline Scheduler...")
+    logger.info("Daily execution: 6:00 AM")
+    logger.info("Press Ctrl+C to stop")
 
     sched = BlockingScheduler()
     sched.add_job(
@@ -75,7 +73,7 @@ def schedule_daily() -> None:
     try:
         sched.start()
     except KeyboardInterrupt:
-        print("\nScheduler stopped by user")
+        logger.info("Scheduler stopped by user")
         sched.shutdown()
 
 

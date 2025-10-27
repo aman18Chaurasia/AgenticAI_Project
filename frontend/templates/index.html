@@ -15,6 +15,8 @@
       <div class="toolbar">
         <div class="tabs">
           <button class="tab active" data-tab="capsuleTab">Capsule</button>
+          <button class="tab" data-tab="planTab">Plan</button>
+          <button class="tab" data-tab="quizTab">Quiz</button>
           <button class="tab" data-tab="subsTab">Subscriptions</button>
           <button class="tab" data-tab="chatTab">Chat</button>
           <button class="tab" data-tab="utilsTab">Utilities</button>
@@ -35,6 +37,15 @@
         <div id="capsule"></div>
       </section>
 
+      <section id="planTab" hidden>
+        <div class="row-center">
+          <button id="btnLoadPlan" class="btn-sm">Refresh Plan</button>
+          <button id="btnRecomputePlan" class="btn-sm">Recompute (use my test results)</button>
+        </div>
+        <div id="planSummary" class="muted-sm"></div>
+        <div id="planWeeks"></div>
+      </section>
+
       <section id="subsTab" hidden>
         <div class="row">
           <input id="email" placeholder="you@example.com" />
@@ -52,6 +63,18 @@
           <tbody id="subsTable"></tbody>
         </table>
         <pre id="subsOut" class="out"></pre>
+      </section>
+
+      <section id="quizTab" hidden>
+        <div class="row">
+          <button id="btnQuizLoad" class="primary">Load Today&#39;s Quiz</button>
+          <button id="btnQuizSubmit" class="btn-sm">Submit Answers</button>
+          <button id="btnQuizProgress" class="btn-sm">My Progress</button>
+        </div>
+        <div id="quizMeta" class="muted-sm"></div>
+        <canvas id="quizChart" width="640" height="200" style="border:1px solid #eee; margin:6px 0;"></canvas>
+        <div id="quizContainer"></div>
+        <pre id="quizOut" class="out"></pre>
       </section>
 
       <section id="chatTab" hidden>

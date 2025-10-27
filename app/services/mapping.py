@@ -1,8 +1,9 @@
 from typing import List, Dict
 from sqlmodel import Session, select
+from sqlalchemy import delete
 from ..models.content import NewsItem, SyllabusTopic, Mapping, PyqQuestion
 from .semantic import tfidf_similarity
-from .summarizer import simple_summarize
+from .summarizer import summarize_text
 
 
 def map_news_to_syllabus(session: Session) -> int:
@@ -14,14 +15,33 @@ def map_news_to_syllabus(session: Session) -> int:
     created = 0
     for n in news:
         if not n.summary:
-            n.summary = simple_summarize(n.content)
+            n.summary = summarize_text(n.content or "")
             session.add(n)
             session.commit()
-        ranked = tfidf_similarity(f"{n.title} {n.summary}", topic_corpus)[:3]
+        # Remove existing mappings to avoid duplicates across runs
+        try:
+            if n.id:
+                session.exec(delete(Mapping).where(Mapping.news_id == n.id))
+                session.commit()
+        except Exception:
+            pass
+        ranked = tfidf_similarity(f"{n.title} {n.summary}", topic_corpus)[:5]
+        # Insert top unique topics above a small threshold
+        inserted = 0
+        seen_topics: set = set()
         for idx, score in ranked:
-            m = Mapping(news_id=n.id or 0, topic_id=topics[idx].id or 0, score=float(score))
+            topic_id = topics[idx].id or 0
+            if topic_id in seen_topics:
+                continue
+            if score <= 0.05:
+                continue
+            m = Mapping(news_id=n.id or 0, topic_id=topic_id, score=float(score))
             session.add(m)
             created += 1
+            inserted += 1
+            seen_topics.add(topic_id)
+            if inserted >= 3:
+                break
         session.commit()
     return created
 
@@ -97,4 +117,3 @@ def find_related_pyqs(session: Session, text: str, top_k: int = 3) -> List[Dict]
             p['score'] = 0.01  # Low confidence score
     
     return relevant_pyqs
-
