@@ -4,11 +4,20 @@ Script to run the full CivicBriefs.ai pipeline with real feeds
 """
 import sys
 import os
+import logging
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.agents.orchestrator import run_once
 from app.core.db import engine
 from sqlmodel import SQLModel
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
 def main():
     print("Starting CivicBriefs.ai Full Pipeline...")
